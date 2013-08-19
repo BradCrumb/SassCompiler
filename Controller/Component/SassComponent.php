@@ -10,9 +10,8 @@ App::uses('Component', 'Controller');
  * @author Patrick Langendoen <github-bradcrumb@patricklangendoen.nl>
  * @author Marc-Jan Barnhoorn <github-bradcrumb@marc-jan.nl>
  * @copyright 2013 (c), Patrick Langendoen & Marc-Jan Barnhoorn
- * @package LessCompilerse
+ * @package SassCompiler
  * @license http://opensource.org/licenses/GPL-3.0 GNU GENERAL PUBLIC LICENSE
- * @todo add php-functions to the lessc configuration
  */
 class SassComponent extends Component {
 
@@ -27,9 +26,7 @@ class SassComponent extends Component {
 	public $settings = array(
 		'sourceFolder'		=> 'sass'		// Where to look for SASS/SCSS files, (From the APP directory)
 	,	'targetFolder'		=> false		// Where to put the generated css (From the webroot directory)
-	,	'formatter'			=> 'compressed' // lessphp compatible formatter
-	,	'preserveComments'	=> null			// Preserve comments or remove them
-	,	'variables'			=> array()		// Pass variables from php to SASS
+	,	'style'				=> 'compressed' // PHPSass compatible style (compressed, compact, nested, expanded)
 	,	'forceCompiling'	=> false		// Always recompile
 	,	'autoRun'			=> false		// Check if compilation is necessary, this ignores the CakePHP Debug setting
 	);
@@ -112,13 +109,6 @@ class SassComponent extends Component {
 	protected static $_minVersionCakePHP = '2.2.0';
 
 /**
- * Minimum required Lessc.php version
- *
- * @var string
- */
-	protected static $_minVersionPhpSass = '0.3.9';
-
-/**
  * Public constructor for the SassComponent
  *
  * @param ComponentCollection $collection
@@ -168,14 +158,6 @@ class SassComponent extends Component {
 		if (Configure::version() < self::$_minVersionCakePHP) {
 			throw new CakeException(__('The SassCompiler plugin requires CakePHP version %s or higher!', self::$_minVersionCakePHP));
 		}
-
-		/*$sassc = new SassCompiler();
-
-		if ($sassc::$VERSION < self::$_minVersionPhpSass) {
-			throw new CakeException(__('The SassCompiler plugin requires PHPSass version %s or higher!', self::$_minVersionPhpSass));
-		}
-
-		unset($sassc);*/
 	}
 
 /**
@@ -413,28 +395,23 @@ class SassComponent extends Component {
 		$cacheFile = $this->_cacheFolder . DS . $cacheFile;
 		$cacheFile = substr_replace($cacheFile, 'cache', -3);
 
-		/*$cache = file_exists($cacheFile)?
+		$cache = file_exists($cacheFile)?
 			unserialize(file_get_contents($cacheFile)):
-			$inputFile;*/
+			$inputFile;
 
 		if (!self::$_instance instanceof SassCompiler) {
-			self::$_instance = new SassCompiler();
-			/*self::$_instance->setFormatter($this->settings['formatter']);
-			if (is_bool($this->settings['preserveComments'])) {
-				self::$_instance->setPreserveComments($this->settings['preserveComments']);
-			}
-			if ($this->settings['variables']) {
-				self::$_instance->setVariables($this->settings['variables']);
-			}*/
+			self::$_instance = new SassCompiler(array(
+				'style' => $this->settings['style']
+			));
 		}
 
-		$css = self::$_instance->compile($inputFile);
+		$newCache = self::$_instance->cachedCompile($cache, $this->settings['forceCompiling']);
 
-		if (true === $this->settings['forceCompiling'] || !file_exists($outputFile) || filemtime($inputFile) > filemtime($outputFile)/* ||
-			!is_array($cache)*/
-			) {
-			//file_put_contents($cacheFile, serialize($newCache));
-			file_put_contents($outputFile, $css);
+		if (true === $this->settings['forceCompiling'] ||
+			!is_array($cache) ||
+			$newCache["updated"] > $cache["updated"]) {
+			file_put_contents($cacheFile, serialize($newCache));
+			file_put_contents($outputFile, $newCache['compiled']);
 
 			return true;
 		}
