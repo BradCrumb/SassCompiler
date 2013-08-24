@@ -3,6 +3,7 @@ App::uses('SassCompiler', 'SassCompiler.Lib');
 App::uses('Folder', 'Utility');
 App::uses('File', 'Utility');
 App::uses('Component', 'Controller');
+App::uses('scss.inc', 'SassCompiler.Vendor/scssphp');
 
 /**
  * SassCompiler
@@ -24,11 +25,12 @@ class SassComponent extends Component {
  * @var array
  */
 	public $settings = array(
-		'sourceFolder'		=> 'sass'		// Where to look for SASS/SCSS files, (From the APP directory)
-	,	'targetFolder'		=> false		// Where to put the generated css (From the webroot directory)
-	,	'style'				=> 'compressed' // PHPSass compatible style (compressed, compact, nested, expanded)
-	,	'forceCompiling'	=> false		// Always recompile
-	,	'autoRun'			=> false		// Check if compilation is necessary, this ignores the CakePHP Debug setting
+		'sourceFolder'		=> 'sass',						// Where to look for .scss files, (From the APP directory)
+		'targetFolder'		=> false,						// Where to put the generated css (From the webroot directory)
+		'formatter'			=> 'scss_formatter_compressed',	// PHPSass compatible style (compressed or nested)
+		'forceCompiling'	=> false,						// Always recompile
+		'autoRun'			=> false,						// Check if compilation is necessary, this ignores the CakePHP Debug setting
+		'import_paths'		=> array()						// Array of paths to search for scss files when using @import, path has to be relative to the sourceFolder
 	);
 
 /**
@@ -46,7 +48,7 @@ class SassComponent extends Component {
 	public $components = array('RequestHandler', 'Session');
 
 /**
- * Contains the indexed folders consisting of sass/scss files
+ * Contains the indexed folders consisting of scss files
  *
  * @var array
  */
@@ -109,6 +111,13 @@ class SassComponent extends Component {
 	protected static $_minVersionCakePHP = '2.2.0';
 
 /**
+ * Minimum required scssc version
+ *
+ * @var string
+ */
+	protected static $_minVersionScssc = '0.0.7';
+
+/**
  * Public constructor for the SassComponent
  *
  * @param ComponentCollection $collection
@@ -158,6 +167,14 @@ class SassComponent extends Component {
 		if (Configure::version() < self::$_minVersionCakePHP) {
 			throw new CakeException(__('The SassCompiler plugin requires CakePHP version %s or higher!', self::$_minVersionCakePHP));
 		}
+
+		$scssc = new LessCompiler();
+
+		if ($scssc::$VERSION < self::$_minVersionScssc) {
+			throw new CakeException(__('The SassCompiler plugin requires scssc version %s or higher!', self::$_minVersionLessc));
+		}
+
+		unset($scssc);
 	}
 
 /**
@@ -341,7 +358,7 @@ class SassComponent extends Component {
 	}
 
 /**
- * Generate the CSS from all the SASS/SCSS files we can find
+ * Generate the CSS from all the .scss files we can find
  *
  * @return String[] Generated CSS files
  */
@@ -349,7 +366,7 @@ class SassComponent extends Component {
 		$generatedFiles = array();
 
 	/**
- 	 * Run the check for the up-to-date compiled SASS/SCSS files when
+ 	 * Run the check for the up-to-date compiled .scss files when
  	 *
  	 * - The Cache does not contain an indication of the fact that the check has run
  	 * - Debug mode is set larger than 0 (suggesting development mode)
@@ -364,7 +381,7 @@ class SassComponent extends Component {
 			foreach ($this->_sassFolders as $key => $sassFolder) {
 				foreach ($sassFolder->find() as $file) {
 					$file = new File($file);
-					if (($file->ext() == 'sass' || $file->ext() == 'scss') && substr($file->name, 0, 2) !== '._') {
+					if (($file->ext() == 'sass' || $file->ext() == 'scss') && substr($file->name, 0, 2) !== '._' && substr($file->name, 0, 1) !== '_') {
 						$sassFile = $sassFolder->path . DS . $file->name;
 						$cssFile = $this->_cssFolders[$key]->path . DS . str_replace(array('.sass','.scss'), '.css', $file->name);
 
@@ -382,15 +399,14 @@ class SassComponent extends Component {
 	}
 
 /**
- * Compile the sass/scss files
+ * Compile the .scss files
  *
  * @param  string $inputFile
  * @param  string $outputFile
- * @param  string $sassFolder
  *
  * @return boolean
  */
-	protected function _autoCompileSass($inputFile, $outputFile, $sassFolder) {
+	protected function _autoCompileSass($inputFile, $outputFile) {
 		$cacheFile = str_replace(DS, '_', str_replace(APP, null, $outputFile));
 		$cacheFile = $this->_cacheFolder . DS . $cacheFile;
 		$cacheFile = substr_replace($cacheFile, 'cache', -3);
@@ -400,9 +416,20 @@ class SassComponent extends Component {
 			$inputFile;
 
 		if (!self::$_instance instanceof SassCompiler) {
-			self::$_instance = new SassCompiler(array(
-				'style' => $this->settings['style']
-			));
+			self::$_instance = new SassCompiler();
+
+			self::$_instance->setFormatter($this->settings['formatter']);
+
+			$paths = array();
+			foreach ($this->_sassFolders as $folder) {
+				foreach ($this->settings['import_paths'] as $path) {
+					if ($fullPath = realpath($folder->path . DS . $path)) {
+						$paths[] = $fullPath;
+					}
+				}
+			}
+
+			self::$_instance->setImportPaths($paths);
 		}
 
 		$newCache = self::$_instance->cachedCompile($cache, $this->settings['forceCompiling']);
