@@ -25,11 +25,11 @@ class SassComponent extends Component {
  * @var array
  */
 	public $settings = array(
-		'sourceFolder'		=> 'sass'						// Where to look for SASS/SCSS files, (From the APP directory)
-	,	'targetFolder'		=> false						// Where to put the generated css (From the webroot directory)
-	,	'formatter'			=> 'scss_formatter_compressed'	// PHPSass compatible style (compressed or nested)
-	,	'forceCompiling'	=> false						// Always recompile
-	,	'autoRun'			=> false						// Check if compilation is necessary, this ignores the CakePHP Debug setting
+		'sourceFolder'		=> 'sass',						// Where to look for .scss files, (From the APP directory)
+		'targetFolder'		=> false,						// Where to put the generated css (From the webroot directory)
+		'formatter'			=> 'scss_formatter_compressed',	// PHPSass compatible style (compressed or nested)
+		'forceCompiling'	=> false,						// Always recompile
+		'autoRun'			=> false						// Check if compilation is necessary, this ignores the CakePHP Debug setting
 	);
 
 /**
@@ -47,7 +47,7 @@ class SassComponent extends Component {
 	public $components = array('RequestHandler', 'Session');
 
 /**
- * Contains the indexed folders consisting of sass/scss files
+ * Contains the indexed folders consisting of scss files
  *
  * @var array
  */
@@ -357,7 +357,7 @@ class SassComponent extends Component {
 	}
 
 /**
- * Generate the CSS from all the SASS/SCSS files we can find
+ * Generate the CSS from all the .scss files we can find
  *
  * @return String[] Generated CSS files
  */
@@ -365,7 +365,7 @@ class SassComponent extends Component {
 		$generatedFiles = array();
 
 	/**
- 	 * Run the check for the up-to-date compiled SASS/SCSS files when
+ 	 * Run the check for the up-to-date compiled .scss files when
  	 *
  	 * - The Cache does not contain an indication of the fact that the check has run
  	 * - Debug mode is set larger than 0 (suggesting development mode)
@@ -398,7 +398,7 @@ class SassComponent extends Component {
 	}
 
 /**
- * Compile the sass/scss files
+ * Compile the .scss files
  *
  * @param  string $inputFile
  * @param  string $outputFile

@@ -1,5 +1,4 @@
 <?php
-//App::uses('scss.inc', 'SassCompiler.Vendor/scssphp');
 App::import('Vendor', 'SassCompiler.scssphp', array('file' => 'scssphp' . DS . 'scss.inc.php'));
 App::uses('MySassImportNode', 'SassCompiler.Lib');
 
