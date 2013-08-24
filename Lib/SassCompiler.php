@@ -1,5 +1,5 @@
 <?php
-App::uses('SassParser', 'SassCompiler.Vendor/phpsass');
+App::import('Vendor', 'SassCompiler.scssphp', array('file' => 'scssphp' . DS . 'scss.inc.php'));
 App::uses('MySassImportNode', 'SassCompiler.Lib');
 
 /**
@@ -11,54 +11,10 @@ App::uses('MySassImportNode', 'SassCompiler.Lib');
  * @package SassCompiler
  * @license http://opensource.org/licenses/GPL-3.0 GNU GENERAL PUBLIC LICENSE
  */
-class SassCompiler extends SassParser {
-
-/**
- * All parsed files
- *
- * @var array
- */
-	protected $_allParsedFiles = array();
-
-/**
- * Compile a SASS/SCSS to css
- *
- * @param String $inputFile SASS/SCSS file
- *
- * @return String Rendered CSS
- */
-	public function compile($inputFile) {
-		$explode = explode('.',$inputFile);
-		$ext = end($explode);
-
-		$this->syntax = $ext;
-
-		return $this->toCss($inputFile);
-	}
-
-/**
- * Parse a sass file or Sass source code and returns the CSS.
- *
- * Inherited from SassParser, and added tracking of processed files
- *
- * @param String $source name of source file or Sass source
- * @param String $isFile If we have to deal with a file or a String
- *
- * @return string CSS
- */
-	public function toCss($source, $isFile = true) {
-		$css = parent::toCss($source, $isFile);
-
-		if ($isFile) {
-			$this->_addParsedFile($source);
-		}
-
-		return $css;
-	}
+class SassCompiler extends scssc {
 
 /**
  * Check if a (re)compile is needed
- *
  * @param  array $in
  * @param  boolean $force
  *
@@ -95,9 +51,13 @@ class SassCompiler extends SassParser {
 			// If we have a root value which means we should rebuild.
 			return array(
 					'root' => $root,
-					'compiled' => $this->compile($root),
-					'files' => json_encode($this->allParsedFiles($root)),
-					'style' => $this->style,
+					'compiled' => $this->compileFile($root),
+					'files' => json_encode($this->getParsedFiles()),
+					//'variables' => json_encode($this->registeredVars),
+					'functions' => json_encode($this->userFunctions),
+					'formatter' => $this->formatter,
+					//'comments' => $this->preserveComments,
+					'importDirs' => json_encode((array)$this->importPaths),
 					'updated' => time(),
 			);
 		} else {
@@ -107,60 +67,28 @@ class SassCompiler extends SassParser {
 		}
 	}
 
-/**
- * Parses a directive
- *
- * Inherited from SassParser, and added tracking of processed files
- *
- * @param SassToken token to parse
- * @param SassNode parent node
- *
- * @throws SassException When nesting not allowed and debug is enabled
- *
- * @return SassNode a Sass directive node
- */
-	public function parseDirective($token, $parent) {
-		if (SassDirectiveNode::extractDirective($token) == '@import') {
-			if ($this->syntax == SassFile::SASS) {
-				$i = 0;
-				$source = '';
-				$size = count($this->source);
-				while ($size > $i && empty($source) && isset($this->source[$i + 1])) {
-					$source = $this->source[$i++];
-				}
-				if (!empty($source) && $this->getLevel($source) > $token->level) {
-					if ($this->debug) {
-						throw new SassException('Nesting not allowed beneath @import directive', $token);
-					}
-				}
-			}
-			$node = new MySassImportNode($token, $parent);
-
-			$files = $node->getFiles($this);
-
-			foreach ($files as $file) {
-				$this->_addParsedFile($file);
-			}
+	public function compileFile($fname, $outFname = null) {
+		if (!is_readable($fname)) {
+			throw new Exception('load error: failed to find ' . $fname);
 		}
 
-		return parent::parseDirective($token, $parent);
-	}
+		$pi = pathinfo($fname);
 
-/**
- * Get all parsed files
- *
- * @return array All parsed files with the modification date
- */
-	public function allParsedFiles() {
-		return $this->_allParsedFiles;
-	}
+		$oldImport = $this->importPaths;
 
-/**
- * Add a parsed file
- *
- * @param String $file File to add to the parsed array
- */
-	protected function _addParsedFile($file) {
-		$this->_allParsedFiles[realpath($file)] = filemtime($file);
+		$this->importPaths = (array)$this->importPaths;
+		$this->importPaths[] = $pi['dirname'] . '/';
+
+		$out = $this->compile(file_get_contents($fname), $fname);
+
+		$this->importPaths = $oldImport;
+
+		$this->parsedFiles[] = $fname;
+
+		if ($outFname !== null) {
+			return file_put_contents($outFname, $out);
+		}
+
+		return $out;
 	}
 }
