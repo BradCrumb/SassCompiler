@@ -50,7 +50,7 @@ public $components = array(
 ### Compass
 Of course you want to use Compass. This is possible with the following steps:
 
-* Clone the Compass source from `https://github.com/chriseppstein/compass`
+* Clone the Compass source from https://github.com/chriseppstein/compass
 * Copy the folder `frameworks/compass/stylesheets` to you CakePHP project's `sass` folder, for example inside `app/sass/compass`
 * Then add the relative path to the `import_paths` setting array:
 
