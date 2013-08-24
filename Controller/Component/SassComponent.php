@@ -3,6 +3,7 @@ App::uses('SassCompiler', 'SassCompiler.Lib');
 App::uses('Folder', 'Utility');
 App::uses('File', 'Utility');
 App::uses('Component', 'Controller');
+App::uses('scss.inc', 'SassCompiler.Vendor/scssphp');
 
 /**
  * SassCompiler
@@ -24,11 +25,11 @@ class SassComponent extends Component {
  * @var array
  */
 	public $settings = array(
-		'sourceFolder'		=> 'sass'		// Where to look for SASS/SCSS files, (From the APP directory)
-	,	'targetFolder'		=> false		// Where to put the generated css (From the webroot directory)
-	,	'style'				=> 'compressed' // PHPSass compatible style (compressed, compact, nested, expanded)
-	,	'forceCompiling'	=> false		// Always recompile
-	,	'autoRun'			=> false		// Check if compilation is necessary, this ignores the CakePHP Debug setting
+		'sourceFolder'		=> 'sass'						// Where to look for SASS/SCSS files, (From the APP directory)
+	,	'targetFolder'		=> false						// Where to put the generated css (From the webroot directory)
+	,	'formatter'			=> 'scss_formatter_compressed'	// PHPSass compatible style (compressed or nested)
+	,	'forceCompiling'	=> false						// Always recompile
+	,	'autoRun'			=> false						// Check if compilation is necessary, this ignores the CakePHP Debug setting
 	);
 
 /**
@@ -109,6 +110,13 @@ class SassComponent extends Component {
 	protected static $_minVersionCakePHP = '2.2.0';
 
 /**
+ * Minimum required scssc version
+ *
+ * @var string
+ */
+	protected static $_minVersionScssc = '0.0.7';
+
+/**
  * Public constructor for the SassComponent
  *
  * @param ComponentCollection $collection
@@ -158,6 +166,14 @@ class SassComponent extends Component {
 		if (Configure::version() < self::$_minVersionCakePHP) {
 			throw new CakeException(__('The SassCompiler plugin requires CakePHP version %s or higher!', self::$_minVersionCakePHP));
 		}
+
+		$scssc = new LessCompiler();
+
+		if ($scssc::$VERSION < self::$_minVersionScssc) {
+			throw new CakeException(__('The SassCompiler plugin requires scssc version %s or higher!', self::$_minVersionLessc));
+		}
+
+		unset($scssc);
 	}
 
 /**
@@ -386,11 +402,10 @@ class SassComponent extends Component {
  *
  * @param  string $inputFile
  * @param  string $outputFile
- * @param  string $sassFolder
  *
  * @return boolean
  */
-	protected function _autoCompileSass($inputFile, $outputFile, $sassFolder) {
+	protected function _autoCompileSass($inputFile, $outputFile) {
 		$cacheFile = str_replace(DS, '_', str_replace(APP, null, $outputFile));
 		$cacheFile = $this->_cacheFolder . DS . $cacheFile;
 		$cacheFile = substr_replace($cacheFile, 'cache', -3);
@@ -400,9 +415,9 @@ class SassComponent extends Component {
 			$inputFile;
 
 		if (!self::$_instance instanceof SassCompiler) {
-			self::$_instance = new SassCompiler(array(
-				'style' => $this->settings['style']
-			));
+			self::$_instance = new SassCompiler();
+
+			self::$_instance->setFormatter($this->settings['formatter']);
 		}
 
 		$newCache = self::$_instance->cachedCompile($cache, $this->settings['forceCompiling']);
