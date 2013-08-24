@@ -81,7 +81,7 @@ class SassCompiler extends scssc {
 
 		$out = $this->compile(file_get_contents($fname), $fname);
 
-		$this->importDir = $oldImport;
+		$this->importPaths = $oldImport;
 
 		$this->parsedFiles[] = $fname;
 

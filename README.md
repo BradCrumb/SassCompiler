@@ -34,15 +34,34 @@ The default duration time for the cache is 4 hours.
 After that time the cache expires and after a new request the component will check for updated or added scss files.
 
 ### Possible Component Settings
-	public $components = array(
-		'SassCompiler.Sass' 	=> array(
-			'sourceFolder'		=> 'sass',						// Where to look for .scss files, (From the APP directory)
-			'targetFolder'		=> false,						// Where to put the generated css (From the webroot directory)
-			'formatter'			=> 'scss_formatter_compressed',	// PHPSass compatible style (compressed or nested)
-			'forceCompiling'	=> false,						// Always recompile
-			'autoRun'			=> false						// Check if compilation is necessary, this ignores the CakePHP Debug setting
-		)
-	);
+```php
+public $components = array(
+	'SassCompiler.Sass' 	=> array(
+		'sourceFolder'		=> 'sass',						// Where to look for .scss files, (From the APP directory)
+		'targetFolder'		=> false,						// Where to put the generated css (From the webroot directory)
+		'formatter'			=> 'scss_formatter_compressed',	// PHPSass compatible style (compressed or nested)
+		'forceCompiling'	=> false,						// Always recompile
+		'autoRun'			=> false,						// Check if compilation is necessary, this ignores the CakePHP Debug setting
+		'import_paths'		=> array()						// Array of paths to search for scss files when using @import, path has to be relative to the sourceFolder
+	)
+);
+```
+
+### Compass
+Of course you want to use Compass. This is possible with the following steps:
+
+* Clone the Compass source from `https://github.com/chriseppstein/compass`
+* Copy the folder `frameworks/compass/stylesheets` to you CakePHP project's `sass` folder, for example inside `app/sass/compass`
+* Then add the relative path to the `import_paths` setting array:
+```php
+...
+'import_paths' => array(
+	'compass'	// Our sass folder is `app/sass`, and with this setting `app/sass/compass` will also be searched for imports
+)
+...
+```
+* Now you can use Compass inside your scss files as you do normally
+
 
 ## License
 GNU General Public License, version 3 (GPL-3.0)

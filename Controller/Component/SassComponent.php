@@ -29,7 +29,8 @@ class SassComponent extends Component {
 		'targetFolder'		=> false,						// Where to put the generated css (From the webroot directory)
 		'formatter'			=> 'scss_formatter_compressed',	// PHPSass compatible style (compressed or nested)
 		'forceCompiling'	=> false,						// Always recompile
-		'autoRun'			=> false						// Check if compilation is necessary, this ignores the CakePHP Debug setting
+		'autoRun'			=> false,						// Check if compilation is necessary, this ignores the CakePHP Debug setting
+		'import_paths'		=> array()						// Array of paths to search for scss files when using @import, path has to be relative to the sourceFolder
 	);
 
 /**
@@ -380,7 +381,7 @@ class SassComponent extends Component {
 			foreach ($this->_sassFolders as $key => $sassFolder) {
 				foreach ($sassFolder->find() as $file) {
 					$file = new File($file);
-					if (($file->ext() == 'sass' || $file->ext() == 'scss') && substr($file->name, 0, 2) !== '._') {
+					if (($file->ext() == 'sass' || $file->ext() == 'scss') && substr($file->name, 0, 2) !== '._' && substr($file->name, 0, 1) !== '_') {
 						$sassFile = $sassFolder->path . DS . $file->name;
 						$cssFile = $this->_cssFolders[$key]->path . DS . str_replace(array('.sass','.scss'), '.css', $file->name);
 
@@ -418,6 +419,17 @@ class SassComponent extends Component {
 			self::$_instance = new SassCompiler();
 
 			self::$_instance->setFormatter($this->settings['formatter']);
+
+			$paths = array();
+			foreach ($this->_sassFolders as $folder) {
+				foreach ($this->settings['import_paths'] as $path) {
+					if ($fullPath = realpath($folder->path . DS . $path)) {
+						$paths[] = $fullPath;
+					}
+				}
+			}
+
+			self::$_instance->setImportPaths($paths);
 		}
 
 		$newCache = self::$_instance->cachedCompile($cache, $this->settings['forceCompiling']);
