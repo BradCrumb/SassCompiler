@@ -54,11 +54,9 @@ Of course you want to use Compass. This is possible with the following steps:
 * Copy the folder `frameworks/compass/stylesheets` to you CakePHP project's `sass` folder, for example inside `app/sass/compass`
 * Then add the relative path to the `import_paths` setting array:
 ```php
-...
 'import_paths' => array(
 	'compass'	// Our sass folder is `app/sass`, and with this setting `app/sass/compass` will also be searched for imports
 )
-...
 ```
 * Now you can use Compass inside your scss files as you do normally
 
