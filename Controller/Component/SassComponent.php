@@ -161,7 +161,7 @@ class SassComponent extends Component {
 			throw new CakeException(__('The SassCompiler plugin requires CakePHP version %s or higher!', self::$_minVersionCakePHP));
 		}
 
-		$scssc = new LessCompiler();
+		$scssc = new SassCompiler();
 
 		if ($scssc::$VERSION < self::$_minVersionScssc) {
 			throw new CakeException(__('The SassCompiler plugin requires scssc version %s or higher!', self::$_minVersionLessc));
