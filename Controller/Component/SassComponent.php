@@ -90,13 +90,6 @@ class SassComponent extends Component {
 	public $enabled = true;
 
 /**
- * Holder for the SassCompiler instance
- *
- * @var SassCompiler
- */
-	protected static $_instance;
-
-/**
  * Minimum required PHP version
  *
  * @var string
@@ -415,24 +408,22 @@ class SassComponent extends Component {
 			unserialize(file_get_contents($cacheFile)):
 			$inputFile;
 
-		if (!self::$_instance instanceof SassCompiler) {
-			self::$_instance = new SassCompiler();
+		$sassCompiler = new SassCompiler();
 
-			self::$_instance->setFormatter($this->settings['formatter']);
+		$sassCompiler->setFormatter($this->settings['formatter']);
 
-			$paths = array();
-			foreach ($this->_sassFolders as $folder) {
-				foreach ($this->settings['import_paths'] as $path) {
-					if ($fullPath = realpath($folder->path . DS . $path)) {
-						$paths[] = $fullPath;
-					}
+		$paths = array();
+		foreach ($this->_sassFolders as $folder) {
+			foreach ($this->settings['import_paths'] as $path) {
+				if ($fullPath = realpath($folder->path . DS . $path)) {
+					$paths[] = $fullPath;
 				}
 			}
-
-			self::$_instance->setImportPaths($paths);
 		}
 
-		$newCache = self::$_instance->cachedCompile($cache, $this->settings['forceCompiling']);
+		$sassCompiler->setImportPaths($paths);
+
+		$newCache = $sassCompiler->cachedCompile($cache, $this->settings['forceCompiling']);
 
 		if (true === $this->settings['forceCompiling'] ||
 			!is_array($cache) ||
