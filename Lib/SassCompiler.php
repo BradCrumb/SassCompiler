@@ -52,7 +52,7 @@ class SassCompiler extends scssc {
 			return array(
 					'root' => $root,
 					'compiled' => $this->compileFile($root),
-					'files' => json_encode($this->getParsedFiles()),
+					'files' => json_encode($this->allParsedFiles()),
 					//'variables' => json_encode($this->registeredVars),
 					'functions' => json_encode($this->userFunctions),
 					'formatter' => $this->formatter,
@@ -72,12 +72,12 @@ class SassCompiler extends scssc {
 			throw new Exception('load error: failed to find ' . $fname);
 		}
 
-		$pi = pathinfo($fname);
+		$pathInfo = pathinfo($fname);
 
 		$oldImport = $this->importPaths;
 
 		$this->importPaths = (array)$this->importPaths;
-		$this->importPaths[] = $pi['dirname'] . '/';
+		$this->importPaths[] = $pathInfo['dirname'] . '/';
 
 		$out = $this->compile(file_get_contents($fname), $fname);
 
@@ -90,5 +90,16 @@ class SassCompiler extends scssc {
 		}
 
 		return $out;
+	}
+
+	public function allParsedFiles() {
+		$tmpParsedFiles = $this->getParsedFiles();
+		$parsedFiles = array();
+
+		foreach ($tmpParsedFiles as $file) {
+			$parsedFiles[$file] = filemtime($file);
+		}
+
+		return $parsedFiles;
 	}
 }
