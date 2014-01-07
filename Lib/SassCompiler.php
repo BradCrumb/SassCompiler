@@ -102,4 +102,23 @@ class SassCompiler extends scssc {
 
 		return $parsedFiles;
 	}
+
+	public function registerHelper($helperName) {
+		$helperClass = $helperName . 'Helper';
+
+		App::uses($helperClass, 'SassCompiler.Lib/Helper');
+
+		$helper = new $helperClass();
+
+		$methods = get_class_methods($helper);
+
+		if (($key = array_search('__construct', $methods)) !== false) {
+			unset($methods[$key]);
+		}
+
+		foreach ($methods as $method) {
+			$function = $helper->{$method}();
+			$this->registerFunction($function['name'], $function['call']);
+		}
+	}
 }
