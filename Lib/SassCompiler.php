@@ -117,8 +117,10 @@ class SassCompiler extends scssc {
 		}
 
 		foreach ($methods as $method) {
-			$function = $helper->{$method}();
-			$this->registerFunction($function['name'], $function['call']);
+			if (substr($method, 0, 1) != '_') {
+				$function = $helper->{$method}();
+				$this->registerFunction($function['name'], $function['call']);
+			}
 		}
 	}
 }
