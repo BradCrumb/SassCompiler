@@ -418,6 +418,7 @@ class SassComponent extends Component {
 		if (!self::$_instance instanceof SassCompiler) {
 			self::$_instance = new SassCompiler();
 			self::$_instance->registerHelper('CompassUrl');
+			self::$_instance->registerHelper('CompassImageDimension');
 
 			self::$_instance->setFormatter($this->settings['formatter']);
 
