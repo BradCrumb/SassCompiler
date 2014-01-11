@@ -421,6 +421,7 @@ class SassComponent extends Component {
 			self::$_instance->registerHelper('CompassImageDimension');
 			self::$_instance->registerHelper('CompassConstant');
 			self::$_instance->registerHelper('CompassMath');
+			self::$_instance->registerHelper('CompassFontFiles');
 
 			self::$_instance->setFormatter($this->settings['formatter']);
 
