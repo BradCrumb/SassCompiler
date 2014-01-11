@@ -25,15 +25,6 @@ App::uses('Helper', 'View');
 class CompassUrlHelper extends SassHelper {
 
 /**
- * Constructor
- */
-	public function __construct() {
-		$null = null;
-		$View = new View($null);
-		$this->Helper = new Helper($View);
-	}
-
-/**
  * Generates a path to an asset found relative to the project's css directory.
  * Passing a true value as the second argument will cause pronly the path to be returned instead of a url() function
  *
@@ -81,13 +72,13 @@ class CompassUrlHelper extends SassHelper {
 				$path = $args[0][2][0];
 				$onlyPath = isset($args[1]) ? $args[1] : false;
 
-				$path = $this->Helper->webroot('fonts' . DS . $path);
+				$path = $this->Helper->assetUrl($this->Helper->webroot('fonts' . DS . $path));
 
 				if ($onlyPath) {
 					return $path;
 				}
 
-				return "url('" . $this->Helper->assetUrl($path) . "')";
+				return "url('" . $path . "')";
 			}
 		);
 	}
@@ -106,7 +97,7 @@ class CompassUrlHelper extends SassHelper {
 				$onlyPath = isset($args[1]) ? $args[1] : false;
 				//$cacheBuster = $args[2];
 
-				$path = Configure::read('App.imageBaseUrl') . $path;
+				$path = $this->Helper->assetUrl(Configure::read('App.imageBaseUrl') . $path);
 
 				if ($onlyPath) {
 					return $path;
