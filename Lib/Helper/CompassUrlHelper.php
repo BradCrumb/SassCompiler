@@ -72,6 +72,11 @@ class CompassUrlHelper extends SassHelper {
 				$path = $args[0][2][0];
 				$onlyPath = isset($args[1]) ? $args[1] : false;
 
+				//Type is interpolate
+				if (empty($path) && is_array($args[0][2][1])) {
+					$path = $args[0][2][1][1][2][0] . $args[0][2][2];
+				}
+
 				$path = $this->Helper->assetUrl($this->Helper->webroot('fonts' . DS . $path));
 
 				if ($onlyPath) {
