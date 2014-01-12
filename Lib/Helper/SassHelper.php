@@ -54,4 +54,15 @@ class SassHelper {
 
 		return false;
 	}
+
+/**
+ * Get full path to image
+ *
+ * @param  String $image Image path
+ *
+ * @return String Full image path
+ */
+	protected function __getFullImagePath($image) {
+		return $this->_getFullAssetPath(Configure::read('App.imageBaseUrl') . $image);
+	}
 }
