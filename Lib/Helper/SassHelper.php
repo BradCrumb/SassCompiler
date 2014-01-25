@@ -65,4 +65,22 @@ class SassHelper {
 	protected function __getFullImagePath($image) {
 		return $this->_getFullAssetPath(Configure::read('App.imageBaseUrl') . $image);
 	}
+
+	public function implementedFunctions() {
+		return array();
+	}
+
+	public function getHelperFunctions() {
+		$functions = array();
+
+		foreach ($this->implementedFunctions() as $name => $method) {
+			$functions[] = array(
+				'name' => $name,
+				'call' => function($args, $compiler) use($method) {
+					return $this->{$method}($args, $compiler);
+				});
+		}
+
+		return $functions;
+	}
 }

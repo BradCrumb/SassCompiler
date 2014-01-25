@@ -1,5 +1,6 @@
 <?php
 App::uses('SassHelper', 'SassCompiler.Lib/Helper');
+App::uses('CompassUrlHelper', 'SassCompiler.Lib/Helper');
 App::uses('View', 'View');
 App::uses('Helper', 'View');
 App::uses('SpriteMap', 'SassCompiler.Lib');
@@ -26,6 +27,17 @@ App::uses('SpriteMap', 'SassCompiler.Lib');
  */
 class CompassSpriteHelper extends SassHelper {
 
+	public function implementedFunctions() {
+		return array(
+			'sprite-map' => 'spriteMap',
+			//'sprite' => 'sprite',
+			'sprite-map-name' => 'spriteMapName',
+			//'sprite-file' => 'spriteFile',
+			'sprite-url' => 'spriteUrl',
+			'sprite-position' => 'spritePosition'
+		);
+	}
+
 /**
  * Generates a css sprite map from the files matching the glob pattern.
  * Uses the keyword-style arguments passed in to control the placement.
@@ -34,13 +46,8 @@ class CompassSpriteHelper extends SassHelper {
  *
  * @return [type] [description]
  */
-	public function spriteMap() {
-		return array(
-			'name' => 'sprite-map',
-			'call' => function($args) {
-				return SpriteMap::fromUri($args[0][2][0]);
-			}
-		);
+	public function spriteMap($args) {
+		return SpriteMap::fromUri($this, $args[0][2][0]);
 	}
 
 /**
@@ -57,15 +64,7 @@ class CompassSpriteHelper extends SassHelper {
  * @return [type] [description]
  */
 	public function sprite() {
-		return array(
-			'name' => 'sprite',
-			'call' => function($args) {
-				$map = $args[0][1];
-				$map->name = 'handig';
 
-				return $map;
-			}
-		);
 	}
 
 /**
@@ -73,13 +72,16 @@ class CompassSpriteHelper extends SassHelper {
  *
  * @return [type] [description]
  */
-	public function spriteMapName() {
-		return array(
-			'name' => 'sprite-map-name',
-			'call' => function($args) {
-				return null;
-			}
-		);
+	public function spriteMapName($args) {
+		if ($args instanceof SpriteMap) {
+			$map = $args;
+		} else {
+			$map = $args[0][1];
+		}
+
+		$this->__verifyMap($map, "sprite-map-name");
+
+		return '"' . $map->name . '"';
 	}
 
 /**
@@ -89,12 +91,7 @@ class CompassSpriteHelper extends SassHelper {
  * @return [type] [description]
  */
 	public function spriteFile() {
-		return array(
-			'name' => 'sprite-file',
-			'call' => function($args) {
-				return null;
-			}
-		);
+
 	}
 
 /**
@@ -102,21 +99,29 @@ class CompassSpriteHelper extends SassHelper {
  *
  * @return [type] [description]
  */
-	public function spriteUrl() {
-		return array(
-			'name' => 'sprite-url',
-			'call' => function($args) {
-				return null;
-			}
-		);
+	public function spriteUrl($args) {
+		if ($args instanceof SpriteMap) {
+			$map = $args;
+		}
+
+		$this->__verifyMap($map, "sprite-url");
+		$map->generate();
+
+		$compassUrlHelper = new CompassUrlHelper();
+		return $compassUrlHelper->generatedImageUrl($map->path . '-s' . $map->uniquenessHash() . '.png');
 	}
 
-	public function spritePosition() {
-		return array(
-			'name' => 'sprite-position',
-			'call' => function($args) {
-				return null;
-			}
-		);
+	public function spritePosition($args) {
+		debug($args);exit();
+	}
+
+	private function __verifyMap($map, $error = "sprite") {
+		if (!$map instanceof SpriteMap) {
+			$this->__missingSprite($error);
+		}
+	}
+
+	private function __missingSprite($functionName) {
+		throw new CakeException("The first argument to {$functionName}() must be a sprite map. See http://beta.compass-style.org/help/tutorials/spriting/ for more information.");
 	}
 }

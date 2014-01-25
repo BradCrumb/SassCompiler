@@ -418,11 +418,11 @@ class SassComponent extends Component {
 		if (!self::$_instance instanceof SassCompiler) {
 			self::$_instance = new SassCompiler();
 			self::$_instance->registerHelper('CompassUrl');
-			self::$_instance->registerHelper('CompassImageDimension');
-			self::$_instance->registerHelper('CompassConstant');
-			self::$_instance->registerHelper('CompassMath');
-			self::$_instance->registerHelper('CompassFontFiles');
-			self::$_instance->registerHelper('CompassInlineData');
+			//self::$_instance->registerHelper('CompassImageDimension');
+			//self::$_instance->registerHelper('CompassConstant');
+			//self::$_instance->registerHelper('CompassMath');
+			//self::$_instance->registerHelper('CompassFontFiles');
+			//self::$_instance->registerHelper('CompassInlineData');
 			self::$_instance->registerHelper('CompassSprite');
 
 			self::$_instance->setFormatter($this->settings['formatter']);

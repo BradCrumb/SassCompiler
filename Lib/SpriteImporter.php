@@ -5,7 +5,7 @@ class SpriteImporter {
 
 	public static function pathAndName($uri) {
 		if (preg_match_all(self::$__spriteImporterRegex, $uri, $matches)) {
-			return array($matches[1], $matches[3]);
+			return array($matches[1][0], $matches[3][0]);
 		}
 
 		throw new CakeException("invalid sprite path");

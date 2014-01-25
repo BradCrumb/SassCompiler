@@ -16,7 +16,8 @@ class SpriteMap {
 
 	public $name;
 
-	public function __construct($sprites, $path, $name) {
+	public function __construct($spriteHelper, $sprites, $path, $name) {
+		$this->Sprite = $spriteHelper;
 		$this->imageNames = $sprites;
 		$this->path = $path;
 		$this->name = $name;
@@ -25,7 +26,7 @@ class SpriteMap {
 		$this->computeImageMetadata();
 	}
 
-	public static function fromUri($uri) {
+	public static function fromUri(CompassSpriteHelper $spriteHelper, $uri) {
 		list($path, $name) = SpriteImporter::pathAndName($uri);
 		$files = SpriteImporter::files($uri);
 
@@ -35,7 +36,7 @@ class SpriteMap {
 			$sprites[] = self::__relativeName($file);
 		}
 
-		return new self($sprites, $path, $name);
+		return new self($spriteHelper, $sprites, $path, $name);
 	}
 
 	private static function __relativeName($sprite) {
@@ -45,6 +46,6 @@ class SpriteMap {
 	}
 
 	public function __toString() {
-		return $this->name;
+		return $this->Sprite->spriteUrl($this);
 	}
 }

@@ -25,38 +25,50 @@ App::uses('Helper', 'View');
 class CompassUrlHelper extends SassHelper {
 
 /**
+ * Constructor
+ */
+	public function __construct() {
+		$null = null;
+		$View = new View($null);
+		$this->Helper = new Helper($View);
+	}
+
+	public function implementedFunctions() {
+		return array(
+			'stylesheet-url'	=> 'stylesheetUrl',
+			'font-url'			=> 'fontUrl',
+			'image-url'			=> 'ImageUrl'
+		);
+	}
+
+/**
  * Generates a path to an asset found relative to the project's css directory.
  * Passing a true value as the second argument will cause pronly the path to be returned instead of a url() function
  *
  * @return String Url to the CSS file
  */
-	public function stylesheetUrl() {
-		return array(
-			'name' => 'stylesheet-url',
-			'call' => function($args) {
-				$path = $args[0][2][0];
-				$onlyPath = isset($args[1]) ? $args[1] : false;
+	public function stylesheetUrl($args) {
+		$path = $args[0][2][0];
+		$onlyPath = isset($args[1]) ? $args[1] : false;
 
-				if (strpos($path, '//') !== false) {
-					$url = $path;
-				} else {
-					$url = $this->Helper->assetUrl($path, array('pathPrefix' => Configure::read('App.cssBaseUrl'), 'ext' => '.css'));
+		if (strpos($path, '//') !== false) {
+			$url = $path;
+		} else {
+			$url = $this->Helper->assetUrl($path, array('pathPrefix' => Configure::read('App.cssBaseUrl'), 'ext' => '.css'));
 
-					if (Configure::read('Asset.filter.css')) {
-						$pos = strpos($url, Configure::read('App.cssBaseUrl'));
-						if ($pos !== false) {
-							$url = substr($url, 0, $pos) . 'ccss/' . substr($url, $pos + strlen(Configure::read('App.cssBaseUrl')));
-						}
-					}
+			if (Configure::read('Asset.filter.css')) {
+				$pos = strpos($url, Configure::read('App.cssBaseUrl'));
+				if ($pos !== false) {
+					$url = substr($url, 0, $pos) . 'ccss/' . substr($url, $pos + strlen(Configure::read('App.cssBaseUrl')));
 				}
-
-				if ($onlyPath) {
-					return $path;
-				}
-
-				return "url('" . $url . "')";
 			}
-		);
+		}
+
+		if ($onlyPath) {
+			return $path;
+		}
+
+		return "url('" . $url . "')";
 	}
 
 /**
@@ -65,27 +77,17 @@ class CompassUrlHelper extends SassHelper {
  *
  * @return String Url to the font file
  */
-	public function fontUrl() {
-		return array(
-			'name' => 'font-url',
-			'call' => function($args) {
-				$path = $args[0][2][0];
-				$onlyPath = isset($args[1]) ? $args[1] : false;
+	public function fontUrl($args) {
+		$path = $args[0][2][0];
+		$onlyPath = isset($args[1]) ? $args[1] : false;
 
-				//Type is interpolate
-				if (empty($path) && is_array($args[0][2][1])) {
-					$path = $args[0][2][1][1][2][0] . $args[0][2][2];
-				}
+		$path = $this->Helper->webroot('fonts' . DS . $path);
 
-				$path = $this->Helper->assetUrl($this->Helper->webroot('fonts' . DS . $path));
+		if ($onlyPath) {
+			return $path;
+		}
 
-				if ($onlyPath) {
-					return $path;
-				}
-
-				return "url('" . $path . "')";
-			}
-		);
+		return "url('" . $this->Helper->assetUrl($path) . "')";
 	}
 
 /**
@@ -94,22 +96,43 @@ class CompassUrlHelper extends SassHelper {
  *
  * @return String Url to the image file
  */
-	public function imageUrl() {
-		return array(
-			'name' => 'image-url',
-			'call' => function($args) {
-				$path = $args[0][2][0];
-				$onlyPath = isset($args[1]) ? $args[1] : false;
-				//$cacheBuster = $args[2];
+	public function imageUrl($args) {
+		$path = $args[0][2][0];
+		$onlyPath = isset($args[1]) ? $args[1] : false;
+		//$cacheBuster = $args[2];
 
-				$path = $this->Helper->assetUrl(Configure::read('App.imageBaseUrl') . $path);
+		$path = Configure::read('App.imageBaseUrl') . $path;
 
-				if ($onlyPath) {
-					return $path;
-				}
+		if ($onlyPath) {
+			return $path;
+		}
 
-				return "url('" . $this->Helper->assetUrl($path) . "')";
+		return "url('" . $this->Helper->assetUrl($path) . "')";
+	}
+
+/**
+ *
+ */
+	public function generatedImageUrl($args) {
+		$onlyPath = false;
+
+		if (is_array($args)) {
+			$path = $args[0][2][0];
+			//$cacheBuster = $args[2];
+
+			if (isset($args[1])) {
+				$onlyPath = $args[1];
 			}
-		);
+		} else {
+			$path = $args;
+		}
+
+		$path = Configure::read('App.imageBaseUrl') . $path;
+
+		if ($onlyPath) {
+			return $path;
+		}
+
+		return "url('" . $this->Helper->assetUrl($path) . "')";
 	}
 }
