@@ -4,6 +4,7 @@ App::uses('CompassUrlHelper', 'SassCompiler.Lib/Helper');
 App::uses('View', 'View');
 App::uses('Helper', 'View');
 App::uses('SpriteMap', 'SassCompiler.Lib');
+App::uses('SassNumber', 'SassCompiler.Lib');
 
 /**
  * CompassSpriteHelper
@@ -29,12 +30,12 @@ class CompassSpriteHelper extends SassHelper {
 
 	public function implementedFunctions() {
 		return array(
-			'sprite-map' => 'spriteMap',
-			//'sprite' => 'sprite',
-			'sprite-map-name' => 'spriteMapName',
-			//'sprite-file' => 'spriteFile',
-			'sprite-url' => 'spriteUrl',
-			'sprite-position' => 'spritePosition'
+			'sprite-map'		=> 'spriteMap',
+			'sprite'			=> 'sprite',
+			'sprite-map-name'	=> 'spriteMapName',
+			'sprite-file'		=> 'spriteFile',
+			'sprite-url'		=> 'spriteUrl',
+			'sprite-position'	=> 'spritePosition'
 		);
 	}
 
@@ -44,7 +45,7 @@ class CompassSpriteHelper extends SassHelper {
  *
  * Only PNG files can be made into css sprites at this time.
  *
- * @return [type] [description]
+ * @return SpriteMap Generated spritemap
  */
 	public function spriteMap($args) {
 		return SpriteMap::fromUri($this, $args[0][2][0]);
@@ -61,16 +62,37 @@ class CompassSpriteHelper extends SassHelper {
  *
  * 			background: url('/images/icons.png?12345678') 0 -24px no-repeat;
  *
- * @return [type] [description]
+ * @throws CakeException When sprite is not given
+ *
+ * @return String Generated background image with position
  */
-	public function sprite() {
+	public function sprite($args) {
+		$map = $args[0][1];
+		$sprite = $this->__convertSpriteName(isset($args[1][1]) ? $args[1][1] : null);
+		$offsetX = isset($args[2]) ? $args[2] : new SassNumber(0);
+		$offsetY = isset($args[3]) ? $args[3] : new SassNumber(0);
 
+		$this->__verifyMap($map, 'sprite');
+
+		if (empty($sprite) || !is_string($sprite)) {
+			throw new CakeException("(The second argument to sprite-position must be a sprite name. See http://beta.compass-style.org/help/tutorials/spriting/ for more information.)");
+		}
+
+		$url = $this->spriteUrl($map);
+		$position = $this->spritePosition(array(
+			array(1 => $map),
+			array(1 => $sprite),
+			$offsetX,
+			$offsetY
+		));
+
+		return $url . ' ' . $position;
 	}
 
 /**
  * Returns the name of a css sprite map The name is derived from the folder than contains the css sprites.
  *
- * @return [type] [description]
+ * @return String Sprite map name
  */
 	public function spriteMapName($args) {
 		if ($args instanceof SpriteMap) {
@@ -88,16 +110,26 @@ class CompassSpriteHelper extends SassHelper {
  * Returns the relative path (from the images directory) to the original file used when construction the sprite.
  * This is suitable for passing to the image-width and image-height helpers.
  *
- * @return [type] [description]
+ * @return String Original image path
  */
 	public function spriteFile() {
+		$map = $args[0][1];
+		$sprite = $this->__convertSpriteName(isset($args[1][1]) ? $args[1][1] : null);
 
+		$this->__verifyMap($map, 'sprite-file');
+		$this->__verifySprite($sprite);
+
+		if ($image = $map->imageFor($sprite)) {
+			return $image;
+		}
+
+		$this->__missingImage($map, $sprite);
 	}
 
 /**
  * Returns a url to the sprite image.
  *
- * @return [type] [description]
+ * @return String Sprite image url
  */
 	public function spriteUrl($args) {
 		if ($args instanceof SpriteMap) {
@@ -111,8 +143,61 @@ class CompassSpriteHelper extends SassHelper {
 		return $compassUrlHelper->generatedImageUrl($map->path . '-s' . $map->uniquenessHash() . '.png');
 	}
 
+/**
+ * Returns the position for the original image in the sprite.
+ *
+ * This is suitable for use as a value to background-position:
+ *
+ * $icons: sprite-map("icons/*.png");
+ * background-position: sprite-position($icons, new);
+ *
+ * Might generate something like:
+ *
+ * background-position: 0 -34px;
+ *
+ * You can adjust the background relative to this position by passing values for
+ * `$offset-x` and `$offset-y`:
+ *
+ * $icons: sprite-map("icons/*.png");
+ * background-position: sprite-position($icons, new, 3px, -2px);
+ *
+ * Would change the above output to:
+ *
+ * background-position: 3px -36px;
+ *
+ * @throws CakeException When sprite is not given
+ *
+ * @return [type]       [description]
+ */
 	public function spritePosition($args) {
-		debug($args);exit();
+		$map = $args[0][1];
+		$sprite = $this->__convertSpriteName(isset($args[1][1]) ? $args[1][1] : null);
+		$offsetX = isset($args[2]) ? $args[2] : new SassNumber(0);
+		$offsetY = isset($args[3]) ? $args[3] : new SassNumber(0);
+
+		$this->__verifyMap($map, 'sprite-position');
+
+		if (empty($sprite) || !is_string($sprite)) {
+			throw new CakeException("(The second argument to sprite-position must be a sprite name. See http://beta.compass-style.org/help/tutorials/spriting/ for more information.)");
+		}
+
+		$image = $map->imageFor($sprite);
+
+		if (!$image) {
+			$this->__missingImage($map, $sprite);
+		}
+
+		if ($offsetX->units == '%') {//Percentage
+
+		} else {
+			$x = $offsetX->value - $image->left;
+			$x = new SassNumber($x, 'px');
+		}
+
+		$y = $offsetY->value - $image->top;
+		$y = new SassNumber($y, 'px');
+
+		return $x . ' ' . $y;
 	}
 
 	private function __verifyMap($map, $error = "sprite") {
@@ -121,7 +206,25 @@ class CompassSpriteHelper extends SassHelper {
 		}
 	}
 
+	private function __verifySprite($sprite) {
+		if (!is_string($sprite)) {
+			throw new CakeException("The second argument to sprite() must be a sprite name. See http://beta.compass-style.org/help/tutorials/spriting/ for more information.");
+		}
+	}
+
 	private function __missingSprite($functionName) {
 		throw new CakeException("The first argument to {$functionName}() must be a sprite map. See http://beta.compass-style.org/help/tutorials/spriting/ for more information.");
+	}
+
+	private function __missingImage($map, $sprite) {
+		$spriteNames = implode(', ', $map->spriteNames());
+		throw new CakeException("No sprite called {$sprite} found in sprite map {$map->path}/{$map->name}. Did you mean one of: {$spriteNames}");
+	}
+
+	private function __convertSpriteName($sprite) {
+		switch($sprite) {
+			default:
+				return $sprite;
+		}
 	}
 }

@@ -77,10 +77,21 @@ class SassHelper {
 			$functions[] = array(
 				'name' => $name,
 				'call' => function($args, $compiler) use($method) {
-					return $this->{$method}($args, $compiler);
+					return $this->{$method}($this->__parseArguments($args), $compiler);
 				});
 		}
 
 		return $functions;
+	}
+
+	private function __parseArguments($args) {
+		foreach ($args as &$arg) {
+			switch($arg[0]) {
+				case 'number':
+					$arg = new SassNumber($arg[1], $arg[2]);
+			}
+		}
+
+		return $args;
 	}
 }

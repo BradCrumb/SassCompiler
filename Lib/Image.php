@@ -42,4 +42,8 @@ class Image {
 	private function __findFile() {
 		return WWW_ROOT . Configure::read('App.imageBaseUrl') . $this->relativeFile;
 	}
+
+	public function name() {
+		return str_replace('.png', '', basename($this->relativeFile));
+	}
 }

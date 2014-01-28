@@ -2,6 +2,11 @@
 
 trait ImageMethods {
 
+/**
+ * Return an array of image names that make up this sprite
+ *
+ * @return [type] [description]
+ */
 	public function spriteNames() {
 		$names = array();
 
@@ -10,5 +15,19 @@ trait ImageMethods {
 		}
 
 		return $names;
+	}
+
+/**
+ * Fetches the Sprite::Image object for the supplied name
+ *
+ * @param  [type] $name [description]
+ * @return [type]       [description]
+ */
+	public function imageFor($name) {
+		foreach ($this->images as $image) {
+			if ($image->name() == $name) {
+				return $image;
+			}
+		}
 	}
 }
